@@ -1,7 +1,7 @@
 #include "lpc_types.h"
 
-I2C_M_SETUP_Type setup_TransferCfg(I2C_M_SETUP_Type TransferCfg, int addr, unsigned long *wrtptr, int wrtlength,
-    unsigned long *rdptr, int rdlength){
+I2C_M_SETUP_Type setup_TransferCfg(I2C_M_SETUP_Type TransferCfg, int addr, unsigned char *wrtptr, int wrtlength,
+    unsigned char *rdptr, int rdlength){
     TransferCfg.sl_addr7bit = addr;
     TransferCfg.tx_data = wrtptr;
     TransferCfg.tx_length = wrtlength;
@@ -11,7 +11,7 @@ I2C_M_SETUP_Type setup_TransferCfg(I2C_M_SETUP_Type TransferCfg, int addr, unsig
 }
 
 I2C_M_SETUP_Type change_write_data(I2C_M_SETUP_Type TransferCfg, 
-    unsigned long *ptr, int data){
+    unsigned char *ptr, int data){
     ptr[1] = data;
     TransferCfg.tx_data = ptr;
     return TransferCfg;
