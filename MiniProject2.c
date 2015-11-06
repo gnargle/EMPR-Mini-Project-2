@@ -2,8 +2,10 @@
 
 #include "lcd_display.h"
 #include "lcd_display.c"
-#include "serial.h"
-#include "serial.c"
+//#include "serial.h"
+//#include "serial.c"
+#include "keypad.c"
+#include "keypad.h"
 
 #define usedi2c LPC_I2C1
 #define i2cfunc 3
@@ -28,8 +30,7 @@ int main(void){
     pin_settings(PinCfg, i2cfunc, 0, 0, i2cport, i2cpin2);
     I2C_Init(usedi2c, 100000);
     I2C_Cmd(usedi2c, ENABLE);
-    write_usb_serial_blocking("1\n\r", 3);
-    /*
+    /* Code to scan i2c. No longer necessary.
     while(i < 128){
         I2C_M_SETUP_Type TransferCfg;
         TransferCfg = setup_TransferCfg(TransferCfg,i,charbuffer,1,receive,0);
@@ -44,21 +45,10 @@ int main(void){
         }
         i++;
     }*/
-    init_display(59);
-    write_usb_serial_blocking("3\n\r", 3);
-    char strtosend[] = "All we wanna do is have some fun";
+    /*  Code to print a random thing to the display.
+    char strtosend[] = "01234567890123456789012345678901";
     uint8_t addr = 0x80;
-    for (i=0; i <33; i++){
-        if (addr == (0x80 + 16)){
-            addr = 0x80 + 40;
-            write_display(59, addr, emptychar);
-            addr++;
-        }
-        else{
-            write_display(59, addr, emptychar);
-            addr++;
-        }
-    }
+    clear_display(59);
     addr = 0x80;
     for(i=0; i < strlen(strtosend); i++){
         if (addr == (0x80 + 16)){
@@ -70,7 +60,48 @@ int main(void){
             write_display(59, addr, (strtosend[i]) | 0x80);
             addr++;
         }
+    }*/
+    init_display(59);
+    int u = 0;
+    init_keypad(33);
+    char write[32] = "";
+    uint8_t addr;
+    while(1){
+        if (u == 1000000){
+            char x;
+            x = read_keypad(33);
+            if (x == '#'){
+                init_display(59);
+                addr = 0x80;
+                clear_display(59);
+                addr = 0x80;
+                for(i=0; i < strlen(write); i++){
+                        if (addr == (0x80 + 16)){
+                            addr = 0x80 + 40;
+                            write_display(59, addr, (write[i]) | 0x80);
+                            addr++;
+                        }
+                        else{
+                            write_display(59, addr, (write[i]) | 0x80);
+                            addr++;
+                            }
+                        }
+                strcpy(write, "");
+            }
+            else if (isdigit(x)){
+                append(write, x);
+            }
+        }
+        else{
+            u++;
+        }
     }
-    write_usb_serial_blocking("4\n\r", 3);
     return 0;
+}
+
+
+void append(char* s, char c){
+    int len = strlen(s);
+    s[len] = c;
+    s[len+1] = '\0';
 }
