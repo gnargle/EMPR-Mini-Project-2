@@ -6,6 +6,7 @@
 //#include "serial.c"
 #include "keypad.c"
 #include "keypad.h"
+#include "calc.c"
 
 #define usedi2c LPC_I2C1
 #define i2cfunc 3
@@ -30,13 +31,13 @@ int main(void){
     pin_settings(PinCfg, i2cfunc, 0, 0, i2cport, i2cpin2);
     I2C_Init(usedi2c, 100000);
     I2C_Cmd(usedi2c, ENABLE);
-    /* Code to scan i2c. No longer necessary.
-    while(i < 128){
+    // Code to scan i2c. No longer necessary.
+    /*while(i < 128){
         I2C_M_SETUP_Type TransferCfg;
         TransferCfg = setup_TransferCfg(TransferCfg,i,charbuffer,1,receive,0);
         if (I2C_MasterTransferData(usedi2c, &TransferCfg, I2C_TRANSFER_POLLING) 
             == SUCCESS){
-            write_usb_serial_blocking("Success on port ", 16);
+            write_usb_serial_blocking("Success on port ", 18);
             char port[3] = "";
             sprintf(port, "%i", i);
             write_usb_serial_blocking(port, 3);
@@ -66,30 +67,44 @@ int main(void){
     init_keypad(33);
     char write[32] = "";
     uint8_t addr;
+    char prev;
+    prev = 'Z';
     while(1){
         if (u == 1000000){
             char x;
             x = read_keypad(33);
-            if (x == '#'){
-                init_display(59);
-                addr = 0x80;
-                clear_display(59);
-                addr = 0x80;
-                for(i=0; i < strlen(write); i++){
-                        if (addr == (0x80 + 16)){
-                            addr = 0x80 + 40;
-                            write_display(59, addr, (write[i]) | 0x80);
-                            addr++;
-                        }
-                        else{
-                            write_display(59, addr, (write[i]) | 0x80);
-                            addr++;
-                            }
-                        }
-                strcpy(write, "");
+            if (x == prev){
+                prev = x;
             }
-            else if (isdigit(x)){
-                append(write, x);
+            else if (x != 'Z' && x != prev){
+                if (x == '#'){
+                    addr = 0x80;
+                    clear_display(59);
+                    int output = Calc(write);
+                    sprintf(write, "%i", output);
+                    for(i=0; i < strlen(write); i++){
+                        addr = alloc_lcd_addr(addr, i, write);
+                    }
+                    strcpy(write, "");
+                    prev = x;
+                }
+                else if (x == 'C'){
+                    clear_display(59);
+                    strcpy(write, "");
+                    prev = x;
+                }
+                else if (isalpha(x) || x == '*' || isdigit(x)){
+                    addr = 0x80;
+                    append(write, x);
+                    clear_display(59);
+                    for(i=0; i < strlen(write); i++){
+                        addr = alloc_lcd_addr(addr, i, write);
+                    }
+                    prev = x;
+                }
+            }
+            else if (x == 'Z' && prev != 'Z'){
+                prev = 'Z';
             }
         }
         else{
@@ -98,7 +113,6 @@ int main(void){
     }
     return 0;
 }
-
 
 void append(char* s, char c){
     int len = strlen(s);
