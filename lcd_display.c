@@ -10,6 +10,21 @@
 #define usedi2c LPC_I2C1
 
 void write_display(int i2c_port, uint8_t address, char char_to_send);
+uint8_t alloc_lcd_addr(uint8_t addr, int i, char* str_to_write);
+
+uint8_t alloc_lcd_addr(uint8_t addr, int i, char* str_to_write){
+    if (addr == (0x80 + 16)){
+        addr = 0x80 + 40;
+        write_display(59, addr, (str_to_write[i]) | 0x80);
+        addr++;
+        return addr;
+    }
+    else{
+        write_display(59, addr, (str_to_write[i]) | 0x80);
+        addr++;
+        return addr;
+    }
+}
 
 void init_display(int i2c_port){
     /*while (read_busy_flag_display(i2c_port) == 1){
